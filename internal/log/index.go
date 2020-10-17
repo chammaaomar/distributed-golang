@@ -43,6 +43,9 @@ func newIndex(f *os.File, c Config) (*index, error) {
 	return idx, nil
 }
 
+// Close flushes the contents of the files to persistent storage before closing it.
+// It also truncates the size of the file to its exact contents so that the last pos
+// is the last thing in the file, without extra junk.
 func (idx *index) Close() error {
 	if err := idx.mmap.Sync(gommap.MS_SYNC); err != nil {
 		return err
@@ -61,8 +64,8 @@ func (idx *index) Close() error {
 
 // Read returns the offset and position of the record whose relative offset
 // in the index file is relativeIndex. For example, the first record is at
-// relativeIndex 0, the second is at relative Index 1, and so on. The returned
-// pos is the position in the store file.
+// relativeIndex 0, the second is at relative Index 1, and so on. Index -1 is
+// the last record info. The returned pos is the position in the store file.
 func (idx *index) Read(relativeIndex int64) (out uint32, pos uint64, err error) {
 	if idx.size == 0 {
 		return 0, 0, io.EOF
