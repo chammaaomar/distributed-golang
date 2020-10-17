@@ -16,7 +16,7 @@ type Log struct {
 }
 
 // Record is a record in the commit log. It has a byte slice Value, and its Offset
-// represents its offset in the commit log
+// represents its offset in the commit log. When serialized, the Value is base64-encoded
 type Record struct {
 	Value  []byte `json:"value"`
 	Offset uint64 `json:"offset"`
