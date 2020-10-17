@@ -38,12 +38,12 @@ func newStore(f *os.File) (*store, error) {
 
 // Append appends the byte slice to the buffer, preceeded by its length
 // as an uint64, without flushing to disk. It returns the number of bytes
-// written, the offset and an error
+// written, the pos and an error
 func (s *store) Append(p []byte) (uint64, uint64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	offset := s.size
+	pos := s.size
 	// length is an integer, which is usually 64 bits, so we write
 	// this in its 8-byte representation
 	if err := binary.Write(s.buf, enc, uint64(len(p))); err != nil {
@@ -57,10 +57,10 @@ func (s *store) Append(p []byte) (uint64, uint64, error) {
 
 	written += lengthWidth
 	s.size += uint64(written)
-	return uint64(written), offset, nil
+	return uint64(written), pos, nil
 }
 
-func (s *store) Read(offset uint64) ([]byte, error) {
+func (s *store) Read(pos uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -70,14 +70,14 @@ func (s *store) Read(offset uint64) ([]byte, error) {
 	}
 
 	lengthBytes := make([]byte, lengthWidth)
-	if _, err := s.File.ReadAt(lengthBytes, int64(offset)); err != nil {
+	if _, err := s.File.ReadAt(lengthBytes, int64(pos)); err != nil {
 		return nil, err
 	}
 
 	length := enc.Uint64(lengthBytes)
 
 	record := make([]byte, length)
-	if _, err := s.File.ReadAt(record, int64(offset+lengthWidth)); err != nil {
+	if _, err := s.File.ReadAt(record, int64(pos+lengthWidth)); err != nil {
 		return nil, err
 	}
 
@@ -85,9 +85,9 @@ func (s *store) Read(offset uint64) ([]byte, error) {
 }
 
 // ReadAt persists buffered data to disk before reading. It reads
-// length(p) bytes starting at offset. It implements the io.ReaderAt
+// length(p) bytes starting at pos. It implements the io.ReaderAt
 // interface
-func (s *store) ReadAt(p []byte, offset int64) (int, error) {
+func (s *store) ReadAt(p []byte, pos int64) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -95,7 +95,7 @@ func (s *store) ReadAt(p []byte, offset int64) (int, error) {
 		return 0, err
 	}
 
-	return s.File.ReadAt(p, offset)
+	return s.File.ReadAt(p, pos)
 }
 
 // Close persists buffered data to disk before closing
