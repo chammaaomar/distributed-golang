@@ -27,7 +27,7 @@ func NewLog() *Log {
 	return &Log{}
 }
 
-// Append is appends a Record to the Log in a concurrency-safe manner
+// Append appends a Record to the Log in a concurrency-safe manner
 func (log *Log) Append(record Record) (uint64, error) {
 	log.mu.Lock()
 	defer log.mu.Unlock()
