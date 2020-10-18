@@ -36,28 +36,28 @@ func newStore(f *os.File) (*store, error) {
 	}, nil
 }
 
-// Append appends the byte slice to the buffer, preceeded by its length
-// as an uint64, without flushing to disk. It returns the number of bytes
-// written, the pos and an error
-func (s *store) Append(p []byte) (uint64, uint64, error) {
+// Append appends the byte slice to the store buffer, preceeded by its length
+// as an uint64, without flushing to disk.
+func (s *store) Append(p []byte) (written uint64, pos uint64, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	pos := s.size
+	pos = s.size
 	// length is an integer, which is usually 64 bits, so we write
 	// this in its 8-byte representation
 	if err := binary.Write(s.buf, enc, uint64(len(p))); err != nil {
 		return 0, 0, err
 	}
 
-	written, err := s.buf.Write(p)
+	writtenInt, err := s.buf.Write(p)
+	written = uint64(writtenInt)
 	if err != nil {
 		return 0, 0, err
 	}
 
 	written += lengthWidth
 	s.size += uint64(written)
-	return uint64(written), pos, nil
+	return written, pos, nil
 }
 
 func (s *store) Read(pos uint64) ([]byte, error) {

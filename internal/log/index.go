@@ -66,6 +66,7 @@ func (idx *index) Close() error {
 // in the index file is relativeIndex. For example, the first record is at
 // relativeIndex 0, the second is at relative Index 1, and so on. Index -1 is
 // the last record info. The returned pos is the position in the store file.
+// The only non-nill error returned by this function is io.EOF.
 func (idx *index) Read(relativeIndex int64) (out uint32, pos uint64, err error) {
 	if idx.size == 0 {
 		return 0, 0, io.EOF
